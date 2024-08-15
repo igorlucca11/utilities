@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  apache:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: php
+    container_name: php
+    restart: always
+    ports:
+      - '8000:80'
+    volumes:
+      - ./html:/var/www/html
+    depends_on:
+      - sqlServer
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      
+
+  sqlServer:
+    container_name: sqlServer
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    restart: always
+    ports:
+      - '1433:1433'
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${SA_PASSWORD}
+      MSSQL_PID: "Express"
+    expose:
+      - 1433
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1'"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+
+volumes:
+  sqlserverdata:
